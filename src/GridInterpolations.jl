@@ -108,11 +108,11 @@ function Base.show(io::IO, grid::AbstractGrid)
     end
 end
 
-function ind2x(grid::AbstractGrid, ind::Int)
+function ind2x(grid::AbstractGrid{D}, ind::Int) where D
     ndims = dimensions(grid)
-    x = Array{Float64}(undef, ndims)
+    x::MVector{D, Float64} = @MVector zeros(D)
     ind2x!(grid, ind, x)
-    x::Array{Float64}
+    x::MVector{D, Float64}
 end
 
 function ind2x!(grid::AbstractGrid, ind::Int, x::AbstractArray)
@@ -332,16 +332,15 @@ function interpolants(grid::SimplexGrid, x::AbstractVector)
 end
 
 "Return a vector of SVectors where the ith vector represents the vertex corresponding to the ith index of grid data."
-function vertices(grid::AbstractGrid)
-    n_dims = dimensions(grid)
-    mem = Array{Float64,2}(undef, n_dims, length(grid))
+function vertices(grid::AbstractGrid{D}) where D
+    mem = Array{Float64,2}(undef, D, length(grid))
 
     for idx = 1 : length(grid)
         this_idx::Int = idx-1
 
         # Get the correct index into each dimension
         # and populate vertex index with corresponding cut point
-        for j = 1 : n_dims
+        for j = 1 : D
             cut_idx::Int = this_idx % grid.cut_counts[j]
             this_idx = div(this_idx,grid.cut_counts[j])
             mem[j, idx] = grid.cutPoints[j][cut_idx+1]
@@ -354,7 +353,7 @@ function vertices(grid::AbstractGrid)
     (http://juliaarrays.github.io/StaticArrays.jl/stable/pages/
     api.html#Arrays-of-static-arrays-1), and tests should catch these errors.
     =#
-    return reshape(reinterpret(SVector{n_dims, Float64}, mem), (length(grid),))
+    return reshape(reinterpret(SVector{D, Float64}, mem), (length(grid),))
 end
 
 
